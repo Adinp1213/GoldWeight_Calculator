@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold Weight Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .calculator-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .results-card {
+            background-color: #e9ecef;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        h1, h3 {
+            color: #343a40;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="calculator-container">
+        <h1 class="text-center mb-4">Gold Weight Calculator</h1>
+
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form action="{% url 'calculator' %}" method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label for="sku" class="form-label">Input SKU</label>
+                    <input type="text" class="form-control" id="sku" name="sku" value="{{ submitted_data.sku }}">
+                </div>
+
+                <hr class="my-4">
+
+                <div class="col-md-6">
+                    <h5 class="mb-3">Original Item</h5>
+                    <div class="mb-3">
+                        <label for="orig_wt" class="form-label">Original Gold Weight (grams)</label>
+                        <input type="number" step="0.01" class="form-control" id="orig_wt" name="orig_wt" value="{{ submitted_data.orig_wt }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="orig_sz" class="form-label">Original Size</label>
+                        <input type="number" step="0.1" class="form-control" id="orig_sz" name="orig_sz" value="{{ submitted_data.orig_sz }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="orig_kt" class="form-label">Original Carat</label>
+                        <select class="form-select" id="orig_kt" name="orig_kt">
+                            <option value="14kt" {% if submitted_data.orig_kt == '14kt' %}selected{% endif %}>14kt</option>
+                            <option value="18kt" {% if submitted_data.orig_kt == '18kt' %}selected{% endif %}>18kt</option>
+                            <option value="9kt" {% if submitted_data.orig_kt == '9kt' %}selected{% endif %}>9kt</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h5 class="mb-3">Changed Item</h5>
+                    <div class="mb-3">
+                        <label for="new_sz" class="form-label">Changed Size (To Change)</label>
+                        <input type="number" step="0.1" class="form-control" id="new_sz" name="new_sz" value="{{ submitted_data.new_sz }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_kt" class="form-label">Changed Carat (To Change)</label>
+                        <select class="form-select" id="new_kt" name="new_kt">
+                            <option value="14kt" {% if submitted_data.new_kt == '14kt' %}selected{% endif %}>14kt</option>
+                            <option value="18kt" {% if submitted_data.new_kt == '18kt' %}selected{% endif %}>18kt</option>
+                            <option value="9kt" {% if submitted_data.new_kt == '9kt' %}selected{% endif %}>9kt</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">Calculate</button>
+            </div>
+        </form>
+
+        {% if final_weight is not None %}
+        <div class="results-card card mt-5">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">Calculation Results</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                SKU
+                                <span class="badge bg-secondary rounded-pill fs-6">{{ sku|default:"N/A" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Size Factor
+                                <span class="badge bg-info rounded-pill fs-6">{{ size_factor }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                KT Factor
+                                <span class="badge bg-info rounded-pill fs-6">{{ kt_factor }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center justify-content-center flex-column">
+                        <div class="text-center p-3">
+                            <h5 class="text-muted">New Estimated Gold Weight</h5>
+                            <p class="display-4 fw-bold text-success">{{ final_weight }}g</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+```
+
+#### `Weight_Calculator/urls.py` (New File)
+
+You need a main URL configuration file for your project that includes the URLs from your `home` app.
+
+```diff
+--- /dev/null
++++ b/Weight_Calculator/urls.py
+@@ -0,0 +1,7 @@
++from django.urls import path
++from home.views import calculator
++
++urlpatterns = [
++    path('', calculator, name='calculator'),
++]
+
+```
+
+### 3. Vercel Deployment Files
+
+To deploy on Vercel, you need a few configuration files at the root of your project.
+
+#### `requirements.txt` (New File)
+
+This file lists the Python packages your project needs.
+
+```diff
+--- /dev/null
++++ b/requirements.txt
+@@ -0,0 +1,2 @@
++Django==4.2.7
++gunicorn==21.2.0
+
+```
+
+#### `vercel.json` (New File)
+
+This file tells Vercel how to build and run your Django project.
+
+```diff
+--- /dev/null
++++ b/vercel.json
+@@ -0,0 +1,12 @@
++{
++    "builds": [
++        {
++            "src": "Weight_Calculator/wsgi.py",
++            "use": "@vercel/python",
++            "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
++        }
++    ],
++    "routes": [
++        {
++            "src": "/(.*)",
++            "dest": "Weight_Calculator/wsgi.py"
++        }
++    ]
++}
+
+```
+
+#### `build_files.sh` (New File)
+
+This script will be run by Vercel to prepare your project for deployment, including collecting static files.
+
+```diff
+--- /dev/null
++++ b/build_files.sh
+@@ -0,0 +1,4 @@
++#!/bin/bash
++
++pip install -r requirements.txt
++python3.9 manage.py collectstatic --noinput
+
+```
+
+Make this file executable by running `chmod +x build_files.sh` in your terminal.
+
+With these files in place, you can connect your GitHub/GitLab repository to Vercel, and it will automatically build and deploy your Gold Weight Calculator. Let me know if you have any other questions!
+
+<!--
+[PROMPT_SUGGESTION]How do I configure the `settings.py` file for Vercel deployment?[/PROMPT_SUGGESTION]
+[PROMPT_SUGGESTION]Can you add a feature to save calculation history using the Django database?[/PROMPT_SUGGESTION]
+-->
